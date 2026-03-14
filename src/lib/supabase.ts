@@ -28,6 +28,34 @@ export async function setNationName(passcode: string, newName: string) {
   return data;
 }
 
+export async function uploadNationFlag(passcode: string, file: File) {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${passcode}-${Math.random()}.${fileExt}`;
+  
+  // 1. Upload to Supabase Storage
+  const { error: uploadError } = await supabase.storage
+    .from('flags')
+    .upload(fileName, file);
+
+  if (uploadError) throw uploadError;
+
+  // 2. Get the public URL of the uploaded flag
+  const { data: publicUrlData } = supabase.storage
+    .from('flags')
+    .getPublicUrl(fileName);
+
+  // 3. Update the nation's database record with the URL
+  const { data, error: updateError } = await supabase
+    .from('nations')
+    .update({ flag_url: publicUrlData.publicUrl })
+    .eq('passcode', passcode)
+    .select()
+    .single();
+
+  if (updateError) throw updateError;
+  return data;
+}
+
 export async function claimDailyExpedition(nationId: string, rewardPayload: any) {
   const { data, error } = await supabase.rpc('process_expedition', {
     p_nation_id: nationId,

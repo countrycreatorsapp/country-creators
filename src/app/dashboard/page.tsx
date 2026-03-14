@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { loginWithPasscode, setNationName } from '../../lib/supabase';
 import ExpeditionEngine from '../../components/ExpeditionEngine';
 import BuildingStore from '../../components/BuildingStore';
+import FlagUploader from '../../components/FlagUploader';
 
 export default function Dashboard() {
   const [nationData, setNationData] = useState<any>(null);
@@ -136,6 +137,11 @@ export default function Dashboard() {
         
         {/* Left Column: Daily Actions & Active Events */}
         <div className="col-span-1 space-y-6">
+          <FlagUploader 
+            passcode={nationData.passcode} 
+            currentFlag={nationData.flag_url} 
+            onFlagUpdate={(url) => setNationData({ ...nationData, flag_url: url })} 
+          />
           <ExpeditionEngine />
           
           <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-2xl border border-rose-900/50 shadow-[0_0_40px_rgba(225,29,72,0.1)] relative overflow-hidden">
