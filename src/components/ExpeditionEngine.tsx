@@ -1,9 +1,16 @@
 "use client";
 import React, { useState } from 'react';
 
-// The RNG Engine Data (The "Deck" of Events)
-const EXPEDITION_EVENTS = [
-  // --- 80% POSITIVE EVENTS ---
+type ExpeditionEvent = {
+  id: string;
+  type: string;
+  title: string;
+  text: string;
+  reward: string;
+  color: string;
+};
+
+const EXPEDITION_EVENTS: ExpeditionEvent[] = [
   { id: 'p1', type: 'positive', title: 'Bountiful Catch', text: 'Your fishing boats discovered a massive school of tuna.', reward: '+50 Food', color: 'text-emerald-400' },
   { id: 'p2', type: 'positive', title: 'Ancient Shrine', text: 'Scouts found a beautiful, untouched shrine in the mountains. Your people rejoice.', reward: '+15 Culture', color: 'text-purple-400' },
   { id: 'p3', type: 'positive', title: 'Driftwood Haul', text: 'A massive amount of usable timber washed ashore after a storm.', reward: '+40 Materials', color: 'text-orange-400' },
@@ -11,11 +18,7 @@ const EXPEDITION_EVENTS = [
   { id: 'p5', type: 'positive', title: 'Lost Scroll', text: 'An explorer unearthed an ancient text hidden in a cave.', reward: '+20 Tech Points', color: 'text-cyan-400' },
   { id: 'p6', type: 'positive', title: 'Fertile Soil', text: 'A rare patch of volcanic soil was found to be incredibly fertile.', reward: '+30 Food, +10 Gold', color: 'text-emerald-400' },
   { id: 'p7', type: 'positive', title: 'Gold Vein', text: 'Miners struck a small but pure vein of gold in the highlands.', reward: '+100 Gold', color: 'text-yellow-400' },
-  
-  // --- 5% NEUTRAL EVENTS ---
   { id: 'n1', type: 'neutral', title: 'Quiet Day', text: 'The scouts returned. The islands are peaceful, but they found nothing of note.', reward: 'No Change', color: 'text-slate-400' },
-
-  // --- 15% NEGATIVE EVENTS (The "Far Fewer" Hazards) ---
   { id: 'h1', type: 'negative', title: 'Minor Tremor', text: 'A small earthquake damaged some of your outer roads.', reward: '-15 Materials', color: 'text-rose-400' },
   { id: 'h2', type: 'negative', title: 'Typhoon Warning', text: 'Heavy rains washed away some of your coastal food stores.', reward: '-20 Food', color: 'text-rose-400' },
 ];
@@ -23,14 +26,11 @@ const EXPEDITION_EVENTS = [
 export default function ExpeditionEngine() {
   const [hasExplored, setHasExplored] = useState(false);
   const [isRolling, setIsRolling] = useState(false);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<ExpeditionEvent | null>(null);
 
   const handleExpedition = () => {
     setIsRolling(true);
-    
-    // Simulate the suspense of the scouts searching
     setTimeout(() => {
-      // RNG Math: Pick a random event from the deck
       const randomIndex = Math.floor(Math.random() * EXPEDITION_EVENTS.length);
       setResult(EXPEDITION_EVENTS[randomIndex]);
       setIsRolling(false);
