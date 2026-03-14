@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 
 // The RNG Engine Data (The "Deck" of Events)

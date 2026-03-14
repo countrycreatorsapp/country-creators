@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 
 // Mock Data for the Teacher Leaderboard
