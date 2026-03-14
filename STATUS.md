@@ -9,7 +9,12 @@
 - [x] 100 Anonymous Student Accounts Generated
 - [x] Live Production Deployment (Vercel: `country-creators.vercel.app`)
 
-## Next Immediate Objectives (Choose One)
-1. **The Trading Market:** Build the UI for students to swap resources with each other (Scarcity & Economics Ohio Standards).
-2. **Google Classroom Automation:** Build the secure script to read your Google grades and automatically award game resources.
-3. **The SaaS Landing Page:** Build the public marketing website to sell this $10/mo system to other teachers.
+## Phase 2 Complete: Engagement Mechanics
+- [x] Initial Nation Naming Modal
+- [x] UI Overhaul (Gaming Vibe / Deep Space Theme)
+- [x] National Flag Uploader (Supabase Storage)
+
+## Phase 3 Immediate Objectives (Next Move)
+1. **The Automation Engine (Google Classroom Bridge):** Build the secure script to read your Google grades and automatically award game resources. (Requires a private local script).
+2. **The Global Trade Market:** Build the UI for students to swap resources with each other (Scarcity & Economics Ohio Standards).
+3. **The Interactive Store:** Wire up the "Build" buttons so spending Gold actually deducts it from their account and permanently unlocks the building.

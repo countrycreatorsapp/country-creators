@@ -162,7 +162,16 @@ export default function Dashboard() {
 
         {/* Right Columns: City Infrastructure & Upgrades */}
         <div className="col-span-2 space-y-6">
-          <BuildingStore />
+          <BuildingStore 
+            nationId={nationData.id} 
+            currentGold={res.gold} 
+            currentMaterials={res.materials} 
+            ownedBuildings={nationData.nation_buildings || []} 
+            onPurchaseSuccess={() => {
+              // Re-fetch data to update HUD after purchase
+              loginWithPasscode(nationData.passcode).then(data => setNationData(data));
+            }} 
+          />
         </div>
       </div>
     </div>
