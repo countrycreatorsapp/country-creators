@@ -107,17 +107,27 @@ export default function Dashboard() {
 
       {/* Header Bar */}
       <header className="flex justify-between items-center pb-6 border-b border-slate-800 relative z-10">
-        <div>
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">
-            {nationData.nation_name}
-          </h1>
-          <p className="text-slate-400 mt-1 font-mono text-sm">
-            Passcode: <span className="text-slate-300">{nationData.passcode}</span> • Lvl {nationData.level} • {nationData.era} Era
-          </p>
+        <div className="flex items-center gap-6">
+          {/* Bigger National Flag next to the name */}
+          <div className="w-32 h-20 bg-slate-900 rounded-lg border-2 border-emerald-500/30 overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.2)] flex-shrink-0 flex items-center justify-center">
+            {nationData.flag_url ? (
+              <img src={nationData.flag_url} alt="Flag" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-3xl opacity-30">🏴</span>
+            )}
+          </div>
+          <div>
+            <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200 drop-shadow-sm">
+              {nationData.nation_name}
+            </h1>
+            <p className="text-slate-400 mt-2 font-mono text-sm uppercase tracking-widest font-bold">
+              Level {nationData.level} Empire • {nationData.era} Era
+            </p>
+          </div>
         </div>
         <button 
           onClick={() => { sessionStorage.clear(); window.location.href = '/'; }}
-          className="text-sm font-bold bg-slate-900/50 hover:bg-slate-800 text-slate-300 px-5 py-2.5 rounded-xl border border-slate-700 transition-all backdrop-blur-sm"
+          className="text-sm font-bold bg-slate-900/50 hover:bg-rose-900/50 text-slate-300 hover:text-rose-400 px-6 py-3 rounded-xl border border-slate-700 hover:border-rose-500/50 transition-all backdrop-blur-sm"
         >
           Sign Out
         </button>
