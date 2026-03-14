@@ -5,12 +5,13 @@ export default function StudentLogin() {
   const [passcode, setPasscode] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // API Call to Supabase goes here
-    // const { data, error } = await supabase.from('nations').select('*').eq('passcode', passcode);
-    setTimeout(() => setLoading(false), 1000);
+    setTimeout(() => {
+      setLoading(false);
+      window.location.href = '/dashboard';
+    }, 1000);
   };
 
   return (

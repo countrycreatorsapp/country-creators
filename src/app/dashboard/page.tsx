@@ -1,8 +1,8 @@
+"use client";
 import React from 'react';
 import ExpeditionEngine from '../../components/ExpeditionEngine';
 import BuildingStore from '../../components/BuildingStore';
 
-// Mock data to simulate the Supabase database for now
 const mockNationData = {
   passcode: 'purple-dragon-72',
   nationName: 'The Republic of Awesome',
@@ -25,7 +25,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white font-sans p-6 pb-20">
-      {/* Header Bar */}
       <header className="flex justify-between items-center pb-6 border-b border-slate-700">
         <div>
           <h1 className="text-4xl font-extrabold text-emerald-400">{nationName}</h1>
@@ -38,7 +37,6 @@ export default function Dashboard() {
         </button>
       </header>
 
-      {/* Resource HUD (Heads Up Display) */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8">
         <ResourceCard title="Population" value={resources.population} icon="👥" color="text-blue-400" />
         <ResourceCard title="Gold" value={resources.gold} icon="🪙" color="text-yellow-400" />
@@ -47,16 +45,9 @@ export default function Dashboard() {
         <ResourceCard title="Culture" value={resources.culture} icon="🏛️" color="text-purple-400" />
       </div>
 
-      {/* Main Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-        
-        {/* Left Column: Daily Actions & Active Events */}
         <div className="col-span-1 space-y-6">
-          
-          {/* Daily Expedition Engine */}
           <ExpeditionEngine />
-
-          {/* Active Crises Panel */}
           <div className="bg-slate-800 p-6 rounded-xl border border-rose-900/50 shadow-lg relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-rose-500"></div>
             <h2 className="text-xl font-bold text-white mb-4">Active Crises</h2>
@@ -73,21 +64,17 @@ export default function Dashboard() {
               <p className="text-slate-500 text-sm">No active threats. Your borders are secure.</p>
             )}
           </div>
-          
         </div>
 
-        {/* Right Columns: City Infrastructure & Upgrades */}
         <div className="col-span-2 space-y-6">
           <BuildingStore />
         </div>
-
       </div>
     </div>
   );
 }
 
-// Helper Component for the Resources
-function ResourceCard({ title, value, icon, color }) {
+function ResourceCard({ title, value, icon, color }: { title: string, value: number, icon: string, color: string }) {
   return (
     <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-md flex items-center space-x-4 transition-transform hover:scale-105">
       <div className="text-3xl">{icon}</div>
