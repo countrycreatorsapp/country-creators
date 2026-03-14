@@ -32,15 +32,6 @@ export async function recoverPasscode(nationName: string) {
   if (error) throw error;
   return data;
 }
-  const { data, error } = await supabase
-    .from('nations')
-    .select('*, resources(*), nation_buildings(*)')
-    .eq('passcode', passcode)
-    .single();
-    
-  if (error) throw error;
-  return data;
-}
 
 export async function buyBuilding(nationId: string, buildingId: string, goldCost: number, materialsCost: number) {
   const { data, error } = await supabase.rpc('buy_building', {
@@ -70,19 +61,16 @@ export async function uploadNationFlag(passcode: string, file: File) {
   const fileExt = file.name.split('.').pop();
   const fileName = `${passcode}-${Math.random()}.${fileExt}`;
   
-  // 1. Upload to Supabase Storage
   const { error: uploadError } = await supabase.storage
     .from('flags')
     .upload(fileName, file);
 
   if (uploadError) throw uploadError;
 
-  // 2. Get the public URL of the uploaded flag
   const { data: publicUrlData } = supabase.storage
     .from('flags')
     .getPublicUrl(fileName);
 
-  // 3. Update the nation's database record with the URL
   const { data, error: updateError } = await supabase
     .from('nations')
     .update({ flag_url: publicUrlData.publicUrl })
