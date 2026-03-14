@@ -16,6 +16,32 @@ export async function loginWithPasscode(passcode: string) {
   return data;
 }
 
+export async function getClassroomLeaderboard() {
+  const { data, error } = await supabase
+    .from('nations')
+    .select('*, resources(*)');
+  if (error) throw error;
+  return data;
+}
+
+export async function recoverPasscode(nationName: string) {
+  const { data, error } = await supabase
+    .from('nations')
+    .select('passcode, nation_name')
+    .ilike('nation_name', `%${nationName}%`);
+  if (error) throw error;
+  return data;
+}
+  const { data, error } = await supabase
+    .from('nations')
+    .select('*, resources(*), nation_buildings(*)')
+    .eq('passcode', passcode)
+    .single();
+    
+  if (error) throw error;
+  return data;
+}
+
 export async function buyBuilding(nationId: string, buildingId: string, goldCost: number, materialsCost: number) {
   const { data, error } = await supabase.rpc('buy_building', {
     p_nation_id: nationId,

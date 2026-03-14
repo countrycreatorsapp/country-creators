@@ -1,126 +1,209 @@
 "use client";
-import React, { useState } from 'react';
-
-const mockStudents = [
-  { passcode: 'purple-dragon-72', name: 'The Republic of Awesome', level: 2, gold: 320, tech: 40, culture: 10 },
-  { passcode: 'crimson-wolf-11', name: 'New Sparta', level: 2, gold: 150, tech: 80, culture: 5 },
-  { passcode: 'silver-hawk-99', name: 'Atlantis Reborn', level: 1, gold: 400, tech: 10, culture: 25 },
-  { passcode: 'golden-bear-44', name: 'The Trading Empire', level: 3, gold: 850, tech: 60, culture: 50 },
-];
+import React, { useEffect, useState } from 'react';
+import { teacherAwardPoints, getClassroomLeaderboard, recoverPasscode } from '../../lib/supabase';
 
 export default function TeacherCommandCenter() {
-  const [targetPasscode, setTargetPasscode] = useState('');
-  const [resourceType, setResourceType] = useState('techPoints');
-  const [amount, setAmount] = useState('');
-  const [reason, setReason] = useState('');
+  const [students, setStudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAward = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert(`Awarded ${amount} ${resourceType} to ${targetPasscode} for: ${reason}`);
+  // Quick Award State
+  const [quickAmount, setQuickAmount] = useState<number>(10);
+  const [quickReason, setQuickReason] = useState('Great Participation');
+
+  // Search/Recovery State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [recoveryResult, setRecoveryResult] = useState<any[] | null>(null);
+
+  useEffect(() => {
+    loadLeaderboard();
+  }, []);
+
+  const loadLeaderboard = async () => {
+    try {
+      const data = await getClassroomLeaderboard();
+      // Format data
+      const formatted = data.map((n: any) => ({
+        passcode: n.passcode,
+        name: n.nation_name,
+        level: n.level,
+        flag_url: n.flag_url,
+        gold: n.resources?.[0]?.gold || 0,
+        tech: n.resources?.[0]?.tech_points || 0,
+        culture: n.resources?.[0]?.culture || 0,
+        materials: n.resources?.[0]?.materials || 0,
+      }));
+      // Default sort by Culture (Participation)
+      formatted.sort((a, b) => b.culture - a.culture);
+      setStudents(formatted);
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
   };
 
-  const triggerGlobalEvent = (eventName: string) => {
-    alert(`GLOBAL EVENT TRIGGERED: ${eventName}. All student dashboards will update instantly.`);
+  const handleQuickAward = async (passcode: string, resource: string, amount: number) => {
+    try {
+      await teacherAwardPoints(passcode, resource, amount, quickReason);
+      // Optimistically update UI
+      setStudents(students.map(s => {
+        if (s.passcode === passcode) {
+          return { ...s, [resource]: s[resource as keyof typeof s] + amount };
+        }
+        return s;
+      }));
+    } catch (err) {
+      alert('Failed to award points.');
+    }
+  };
+
+  const handleRecoverySearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery) return;
+    try {
+      const result = await recoverPasscode(searchQuery);
+      setRecoveryResult(result);
+    } catch (err) {
+      alert('Search failed.');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 font-sans p-8">
-      <header className="flex justify-between items-center mb-8 border-b-2 border-slate-300 pb-4">
+    <div className="min-h-screen bg-slate-950 text-white font-sans p-8">
+      <header className="flex justify-between items-center mb-8 border-b border-slate-800 pb-6">
         <div>
-          <h1 className="text-3xl font-black text-slate-800">Teacher Command Center</h1>
-          <p className="text-slate-500 font-medium">Class: 6th Grade Social Studies (Ohio Standards) • Current Unit: Japan</p>
+          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+            Teacher Command Center
+          </h1>
+          <p className="text-slate-400 font-medium mt-1">Live Classroom Analytics & Economy Engine</p>
         </div>
         <div className="flex items-center space-x-4">
-          <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-bold border border-emerald-300 flex items-center gap-2">
+          <span className="bg-emerald-900/30 text-emerald-400 px-4 py-2 rounded-xl text-sm font-bold border border-emerald-500/30 flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            System Live
+            SYSTEM ONLINE
           </span>
-          <button className="text-sm bg-slate-800 text-white hover:bg-slate-700 px-4 py-2 rounded-lg transition-colors">
-            Log Out
-          </button>
         </div>
       </header>
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        <div className="col-span-1 space-y-8">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span>⚡</span> Direct Award System
+
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        
+        {/* Left Column: Quick Controls */}
+        <div className="col-span-1 space-y-6">
+          
+          {/* Quick Settings Panel */}
+          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 backdrop-blur-md shadow-lg">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <span>⚙️</span> Fast Action Settings
             </h2>
-            <p className="text-sm text-slate-500 mb-6">Instantly transfer resources to a student based on class performance.</p>
-            <form onSubmit={handleAward} className="space-y-4">
+            <p className="text-xs text-slate-400 mb-4">Set your default award amount for the buttons on the leaderboard.</p>
+            <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Target Passcode</label>
-                <input type="text" placeholder="e.g. purple-dragon-72" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" value={targetPasscode} onChange={(e) => setTargetPasscode(e.target.value)} required />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Resource</label>
-                  <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" value={resourceType} onChange={(e) => setResourceType(e.target.value)}>
-                    <option value="techPoints">🔬 Tech Points (Quizzes)</option>
-                    <option value="gold">🪙 Gold (Homework)</option>
-                    <option value="culture">🏛️ Culture (Behavior)</option>
-                    <option value="materials">🪵 Materials (Projects)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Amount</label>
-                  <input type="number" placeholder="e.g. 50" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" value={amount} onChange={(e) => setAmount(e.target.value)} required />
-                </div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Default Award Amount</label>
+                <input 
+                  type="number" 
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-emerald-500"
+                  value={quickAmount}
+                  onChange={(e) => setQuickAmount(Number(e.target.value))}
+                />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Reason (Audit Log)</label>
-                <input type="text" placeholder="e.g. Aced the Japan Vocab Quiz" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm" value={reason} onChange={(e) => setReason(e.target.value)} required />
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Audit Log Reason</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 text-sm"
+                  value={quickReason}
+                  onChange={(e) => setQuickReason(e.target.value)}
+                />
               </div>
-              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-colors shadow-md">
-                Transmit Resources
-              </button>
-            </form>
-          </div>
-          <div className="bg-rose-50 p-6 rounded-xl shadow-sm border border-rose-200">
-            <h2 className="text-xl font-bold text-rose-900 mb-2 flex items-center gap-2">
-              <span>🌍</span> Global Classroom Events
-            </h2>
-            <div className="space-y-3 mt-4">
-              <button onClick={() => triggerGlobalEvent('The Archipelago Shift')} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded-lg flex justify-between items-center transition-colors shadow-sm">
-                <span>Trigger: Archipelago Shift (Japan)</span><span>🌋</span>
-              </button>
-              <button onClick={() => triggerGlobalEvent('Golden Age')} className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg flex justify-between items-center transition-colors shadow-sm">
-                <span>Trigger: Golden Age (Double Prod)</span><span>✨</span>
-              </button>
             </div>
+          </div>
+
+          {/* Passcode Recovery Tool */}
+          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 backdrop-blur-md shadow-lg">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <span>🔍</span> Passcode Recovery
+            </h2>
+            <p className="text-xs text-slate-400 mb-4">A student lost their slip? Search by their Nation's Name.</p>
+            <form onSubmit={handleRecoverySearch} className="flex gap-2">
+              <input 
+                type="text" 
+                placeholder="e.g. Republic of Awesome"
+                className="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-lg font-bold">Find</button>
+            </form>
+            
+            {recoveryResult && recoveryResult.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {recoveryResult.map((r, idx) => (
+                  <div key={idx} className="bg-indigo-950/30 border border-indigo-800 p-3 rounded-lg flex justify-between items-center">
+                    <span className="text-sm font-bold truncate pr-2">{r.nation_name}</span>
+                    <span className="text-xs font-mono bg-slate-950 px-2 py-1 rounded text-slate-300 border border-slate-700">{r.passcode}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-        <div className="col-span-2">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-full">
-            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
-              <span>🏆</span> Anonymous Class Leaderboard
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b-2 border-slate-200 text-xs uppercase tracking-wider text-slate-500">
-                    <th className="pb-3 font-bold">Nation Name</th>
-                    <th className="pb-3 font-bold">Passcode</th>
-                    <th className="pb-3 font-bold text-center">Lvl</th>
-                    <th className="pb-3 font-bold text-right">Gold 🪙</th>
-                    <th className="pb-3 font-bold text-right">Tech 🔬</th>
-                    <th className="pb-3 font-bold text-right">Culture 🏛️</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {mockStudents.map((student, index) => (
-                    <tr key={index} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-4 font-bold text-slate-800">{student.name}</td>
-                      <td className="py-4 font-mono text-sm text-slate-500">{student.passcode}</td>
-                      <td className="py-4 text-center font-black text-indigo-600">{student.level}</td>
-                      <td className="py-4 text-right font-medium text-yellow-600">{student.gold}</td>
-                      <td className="py-4 text-right font-medium text-cyan-600">{student.tech}</td>
-                      <td className="py-4 text-right font-medium text-purple-600">{student.culture}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+        {/* Right Columns: The Live Fast-Action Leaderboard */}
+        <div className="col-span-3">
+          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 backdrop-blur-md shadow-lg min-h-full">
+            <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                <span>🏆</span> Live Classroom Economy (Sorted by Culture)
+              </h2>
+              <button onClick={loadLeaderboard} className="text-sm text-emerald-400 font-bold hover:text-emerald-300">Refresh Data 🔄</button>
             </div>
+
+            {loading ? (
+              <div className="text-center py-20 text-slate-500">Loading Live Database...</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-500">
+                      <th className="pb-3 pl-4 font-bold w-12">Flag</th>
+                      <th className="pb-3 font-bold">Nation Name</th>
+                      <th className="pb-3 font-bold text-center">Gold 🪙</th>
+                      <th className="pb-3 font-bold text-center">Tech 🔬</th>
+                      <th className="pb-3 font-bold text-center">Culture 🏛️</th>
+                      <th className="pb-3 font-bold text-center">Materials 🪵</th>
+                      <th className="pb-3 font-bold text-right pr-4">Fast Actions (Give +{quickAmount})</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {students.map((student, index) => (
+                      <tr key={index} className="hover:bg-slate-800/50 transition-colors group">
+                        <td className="py-3 pl-4">
+                           <div className="w-8 h-6 bg-slate-800 rounded border border-slate-700 overflow-hidden flex items-center justify-center text-xs">
+                             {student.flag_url ? <img src={student.flag_url} className="w-full h-full object-cover" /> : '🏴'}
+                           </div>
+                        </td>
+                        <td className="py-3 font-bold text-slate-200">
+                          {student.name}
+                          <div className="text-[10px] text-slate-500 font-mono font-normal opacity-0 group-hover:opacity-100 transition-opacity">Passcode: {student.passcode}</div>
+                        </td>
+                        <td className="py-3 text-center font-medium text-amber-400">{student.gold}</td>
+                        <td className="py-3 text-center font-medium text-cyan-400">{student.tech}</td>
+                        <td className="py-3 text-center font-medium text-fuchsia-400">{student.culture}</td>
+                        <td className="py-3 text-center font-medium text-orange-400">{student.materials}</td>
+                        
+                        {/* Fast Action Buttons */}
+                        <td className="py-3 text-right pr-4">
+                          <div className="flex justify-end gap-1 opacity-20 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleQuickAward(student.passcode, 'gold', quickAmount)} className="bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 border border-amber-500/30 px-2 py-1 rounded text-xs font-bold transition-colors" title="Give Gold">🪙</button>
+                            <button onClick={() => handleQuickAward(student.passcode, 'tech_points', quickAmount)} className="bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-400 border border-cyan-500/30 px-2 py-1 rounded text-xs font-bold transition-colors" title="Give Tech">🔬</button>
+                            <button onClick={() => handleQuickAward(student.passcode, 'culture', quickAmount)} className="bg-fuchsia-500/20 hover:bg-fuchsia-500/40 text-fuchsia-400 border border-fuchsia-500/30 px-2 py-1 rounded text-xs font-bold transition-colors" title="Give Culture">🏛️</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>
