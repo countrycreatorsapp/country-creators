@@ -19,6 +19,7 @@ export default function StudentLogin() {
       
       if (nation) {
         // Securely pass to dashboard
+        sessionStorage.clear(); // Clear any old sessions first
         sessionStorage.setItem('cc_passcode', cleanPasscode);
         window.location.href = '/dashboard';
       }
