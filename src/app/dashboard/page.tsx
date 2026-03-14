@@ -4,6 +4,7 @@ import { loginWithPasscode, setNationName } from '../../lib/supabase';
 import ExpeditionEngine from '../../components/ExpeditionEngine';
 import BuildingStore from '../../components/BuildingStore';
 import FlagUploader from '../../components/FlagUploader';
+import ClassroomRewardsStore from '../../components/ClassroomRewardsStore';
 
 export default function Dashboard() {
   const [nationData, setNationData] = useState<any>(null);
@@ -178,9 +179,15 @@ export default function Dashboard() {
             currentMaterials={res.materials} 
             ownedBuildings={nationData.nation_buildings || []} 
             onPurchaseSuccess={() => {
-              // Re-fetch data to update HUD after purchase
               loginWithPasscode(nationData.passcode).then(data => setNationData(data));
             }} 
+          />
+          <ClassroomRewardsStore 
+            nationId={nationData.id}
+            resources={res}
+            onPurchaseSuccess={() => {
+              loginWithPasscode(nationData.passcode).then(data => setNationData(data));
+            }}
           />
         </div>
       </div>

@@ -107,3 +107,35 @@ export async function teacherAwardPoints(passcode: string, resource: string, amo
   if (error) throw error;
   return data;
 }
+
+export async function buyClassroomPerk(nationId: string, perkName: string, costAmount: number, costCurrency: string) {
+  const { data, error } = await supabase.rpc('buy_classroom_perk', {
+    p_nation_id: nationId,
+    p_perk_name: perkName,
+    p_cost_amount: costAmount,
+    p_cost_currency: costCurrency
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getPendingPerks() {
+  const { data, error } = await supabase
+    .from('perk_purchases')
+    .select('id, perk_name, status, purchased_at, nations(passcode, nation_name)')
+    .eq('status', 'pending')
+    .order('purchased_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function markPerkRedeemed(purchaseId: string) {
+  const { data, error } = await supabase.rpc('redeem_perk', {
+    p_purchase_id: purchaseId
+  });
+
+  if (error) throw error;
+  return data;
+}
