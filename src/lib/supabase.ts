@@ -83,17 +83,45 @@ export async function uploadNationFlag(passcode: string, file: File) {
 }
 
 export async function claimDailyExpedition(nationId: string, rewardPayload: any) {
-  const { data, error } = await supabase.rpc('process_expedition', {
-    p_nation_id: nationId,
-    p_gold_reward: rewardPayload.gold || 0,
-    p_materials_reward: rewardPayload.materials || 0,
-    p_tech_reward: rewardPayload.tech || 0,
-    p_culture_reward: rewardPayload.culture || 0,
-    p_food_reward: rewardPayload.food || 0
-  });
+  // Try fetching current resources first since RPC might not exist
+  const { data: resData, error: fetchErr } = await supabase
+    .from('resources')
+    .select('*')
+    .eq('nation_id', nationId)
+    .single();
 
-  if (error) throw error;
-  return data;
+  if (fetchErr && fetchErr.code !== 'PGRST116') { // PGRST116 is no rows
+    throw fetchErr;
+  }
+
+  const current = resData || { gold: 0, materials: 0, tech_points: 0, culture: 0, food: 0, population: 100 };
+  
+  const updates = {
+    gold: (current.gold || 0) + (rewardPayload.gold || 0),
+    materials: (current.materials || 0) + (rewardPayload.materials || 0),
+    tech_points: (current.tech_points || 0) + (rewardPayload.tech || 0),
+    culture: (current.culture || 0) + (rewardPayload.culture || 0),
+    food: (current.food || 0) + (rewardPayload.food || 0)
+  };
+
+  if (resData) {
+    const { data, error } = await supabase
+      .from('resources')
+      .update(updates)
+      .eq('nation_id', nationId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } else {
+    const { data, error } = await supabase
+      .from('resources')
+      .insert({ nation_id: nationId, ...updates, population: 100 })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
 }
 
 export async function teacherAwardPoints(passcode: string, resource: string, amount: number, reason: string) {

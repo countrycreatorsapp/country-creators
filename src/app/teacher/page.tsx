@@ -1,8 +1,109 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { teacherAwardPoints, getClassroomLeaderboard, recoverPasscode } from '../../lib/supabase';
+import { teacherAwardPoints, getClassroomLeaderboard, recoverPasscode, supabase } from '../../lib/supabase';
+import { Session } from '@supabase/supabase-js';
 
-export default function TeacherCommandCenter() {
+export default function TeacherPage() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (authLoading) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-emerald-500 font-bold">Loading Secure Connection...</div>;
+  }
+
+  if (!session) {
+    return <TeacherLogin />;
+  }
+
+  return <TeacherCommandCenter />;
+}
+
+function TeacherLogin() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans">
+      <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl w-full max-w-md">
+        <h1 className="text-3xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 mb-2">Teacher Login</h1>
+        <p className="text-slate-400 text-center mb-8 text-sm">Sign in to access the Command Center</p>
+        
+        {error && (
+          <div className="bg-red-900/30 border border-red-500/50 text-red-400 p-3 rounded-lg mb-6 text-sm text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
+            <input 
+              type="email" 
+              required
+              className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="teacher@school.edu"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Password</label>
+            <input 
+              type="password" 
+              required
+              className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl transition-colors disabled:opacity-50 mt-4"
+          >
+            {loading ? 'Authenticating...' : 'Access Command Center'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function TeacherCommandCenter() {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -67,6 +168,10 @@ export default function TeacherCommandCenter() {
     }
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans p-8">
       <header className="flex justify-between items-center mb-8 border-b border-slate-800 pb-6">
@@ -81,6 +186,12 @@ export default function TeacherCommandCenter() {
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             SYSTEM ONLINE
           </span>
+          <button 
+            onClick={handleSignOut}
+            className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-sm font-bold transition-colors"
+          >
+            Sign Out
+          </button>
         </div>
       </header>
 
@@ -178,7 +289,7 @@ export default function TeacherCommandCenter() {
                       <tr key={index} className="hover:bg-slate-800/50 transition-colors group">
                         <td className="py-3 pl-4">
                            <div className="w-8 h-6 bg-slate-800 rounded border border-slate-700 overflow-hidden flex items-center justify-center text-xs">
-                             {student.flag_url ? <img src={student.flag_url} className="w-full h-full object-cover" /> : '🏴'}
+                             {student.flag_url ? <img src={student.flag_url} className="w-full h-full object-cover" /> : '🇺🇸'}
                            </div>
                         </td>
                         <td className="py-3 font-bold text-slate-200">

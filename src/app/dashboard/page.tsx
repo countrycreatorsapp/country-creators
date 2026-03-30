@@ -27,7 +27,7 @@ export default function Dashboard() {
           setNamingModalOpen(true);
         }
       } catch (err) {
-        console.error('Failed to load nation', err);
+        console.error(err);
         window.location.href = '/';
       }
       setLoading(false);
@@ -114,7 +114,7 @@ export default function Dashboard() {
             {nationData.flag_url ? (
               <img src={nationData.flag_url} alt="Flag" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-3xl opacity-30">🏴</span>
+              <span className="text-3xl opacity-30">🇺🇸</span>
             )}
           </div>
           <div>
@@ -153,7 +153,12 @@ export default function Dashboard() {
             currentFlag={nationData.flag_url} 
             onFlagUpdate={(url) => setNationData({ ...nationData, flag_url: url })} 
           />
-          <ExpeditionEngine />
+          <ExpeditionEngine 
+            nationId={nationData.id}
+            onExpeditionComplete={() => {
+              loginWithPasscode(nationData.passcode).then(data => setNationData(data));
+            }}
+          />
           
           <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-2xl border border-rose-900/50 shadow-[0_0_40px_rgba(225,29,72,0.1)] relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-600 to-red-500"></div>

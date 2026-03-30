@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import { claimDailyExpedition } from '../lib/supabase';
 
 type ExpeditionEvent = {
   id: string;
@@ -8,34 +9,58 @@ type ExpeditionEvent = {
   text: string;
   reward: string;
   color: string;
+  payload: { gold?: number; materials?: number; tech?: number; culture?: number; food?: number; };
 };
 
 const EXPEDITION_EVENTS: ExpeditionEvent[] = [
-  { id: 'p1', type: 'positive', title: 'Bountiful Catch', text: 'Your fishing boats discovered a massive school of tuna.', reward: '+50 Food', color: 'text-emerald-400' },
-  { id: 'p2', type: 'positive', title: 'Ancient Shrine', text: 'Scouts found a beautiful, untouched shrine in the mountains. Your people rejoice.', reward: '+15 Culture', color: 'text-purple-400' },
-  { id: 'p3', type: 'positive', title: 'Driftwood Haul', text: 'A massive amount of usable timber washed ashore after a storm.', reward: '+40 Materials', color: 'text-orange-400' },
-  { id: 'p4', type: 'positive', title: 'Merchant Fleet', text: 'A friendly merchant fleet from a neighboring island visited your port.', reward: '+75 Gold', color: 'text-yellow-400' },
-  { id: 'p5', type: 'positive', title: 'Lost Scroll', text: 'An explorer unearthed an ancient text hidden in a cave.', reward: '+20 Tech Points', color: 'text-cyan-400' },
-  { id: 'p6', type: 'positive', title: 'Fertile Soil', text: 'A rare patch of volcanic soil was found to be incredibly fertile.', reward: '+30 Food, +10 Gold', color: 'text-emerald-400' },
-  { id: 'p7', type: 'positive', title: 'Gold Vein', text: 'Miners struck a small but pure vein of gold in the highlands.', reward: '+100 Gold', color: 'text-yellow-400' },
-  { id: 'n1', type: 'neutral', title: 'Quiet Day', text: 'The scouts returned. The islands are peaceful, but they found nothing of note.', reward: 'No Change', color: 'text-slate-400' },
-  { id: 'h1', type: 'negative', title: 'Minor Tremor', text: 'A small earthquake damaged some of your outer roads.', reward: '-15 Materials', color: 'text-rose-400' },
-  { id: 'h2', type: 'negative', title: 'Typhoon Warning', text: 'Heavy rains washed away some of your coastal food stores.', reward: '-20 Food', color: 'text-rose-400' },
+  { id: 'p1', type: 'positive', title: 'Bountiful Catch', text: 'Your fishing boats discovered a massive school of tuna.', reward: '+50 Food', color: 'text-emerald-400', payload: { food: 50 } },
+  { id: 'p2', type: 'positive', title: 'Ancient Shrine', text: 'Scouts found a beautiful, untouched shrine in the mountains. Your people rejoice.', reward: '+15 Culture', color: 'text-purple-400', payload: { culture: 15 } },
+  { id: 'p3', type: 'positive', title: 'Driftwood Haul', text: 'A massive amount of usable timber washed ashore after a storm.', reward: '+40 Materials', color: 'text-orange-400', payload: { materials: 40 } },
+  { id: 'p4', type: 'positive', title: 'Merchant Fleet', text: 'A friendly merchant fleet from a neighboring island visited your port.', reward: '+75 Gold', color: 'text-yellow-400', payload: { gold: 75 } },
+  { id: 'p5', type: 'positive', title: 'Lost Scroll', text: 'An explorer unearthed an ancient text hidden in a cave.', reward: '+20 Tech Points', color: 'text-cyan-400', payload: { tech: 20 } },
+  { id: 'p6', type: 'positive', title: 'Fertile Soil', text: 'A rare patch of volcanic soil was found to be incredibly fertile.', reward: '+30 Food, +10 Gold', color: 'text-emerald-400', payload: { food: 30, gold: 10 } },
+  { id: 'p7', type: 'positive', title: 'Gold Vein', text: 'Miners struck a small but pure vein of gold in the highlands.', reward: '+100 Gold', color: 'text-yellow-400', payload: { gold: 100 } },
+  { id: 'n1', type: 'neutral', title: 'Quiet Day', text: 'The scouts returned. The islands are peaceful, but they found nothing of note.', reward: 'No Change', color: 'text-slate-400', payload: {} },
+  { id: 'h1', type: 'negative', title: 'Minor Tremor', text: 'A small earthquake damaged some of your outer roads.', reward: '-15 Materials', color: 'text-rose-400', payload: { materials: -15 } },
+  { id: 'h2', type: 'negative', title: 'Typhoon Warning', text: 'Heavy rains washed away some of your coastal food stores.', reward: '-20 Food', color: 'text-rose-400', payload: { food: -20 } },
 ];
 
-export default function ExpeditionEngine() {
+type Props = {
+  nationId: string;
+  onExpeditionComplete?: () => void;
+};
+
+export default function ExpeditionEngine({ nationId, onExpeditionComplete }: Props) {
   const [hasExplored, setHasExplored] = useState(false);
   const [isRolling, setIsRolling] = useState(false);
   const [result, setResult] = useState<ExpeditionEvent | null>(null);
 
-  const handleExpedition = () => {
+  const handleExpedition = async () => {
     setIsRolling(true);
-    setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * EXPEDITION_EVENTS.length);
-      setResult(EXPEDITION_EVENTS[randomIndex]);
+    
+    // Choose result immediately
+    const randomIndex = Math.floor(Math.random() * EXPEDITION_EVENTS.length);
+    const chosenEvent = EXPEDITION_EVENTS[randomIndex];
+
+    try {
+      // Call Supabase RPC
+      await claimDailyExpedition(nationId, chosenEvent.payload);
+
+      // Simulate the time for scouts to return
+      setTimeout(() => {
+        setResult(chosenEvent);
+        setIsRolling(false);
+        setHasExplored(true);
+        if (onExpeditionComplete) {
+          onExpeditionComplete();
+        }
+      }, 1500);
+      
+    } catch (err) {
+      console.error('Expedition failed:', err);
       setIsRolling(false);
-      setHasExplored(true);
-    }, 1500);
+      alert('Your scouts failed to return! (Database error)');
+    }
   };
 
   return (
