@@ -37,7 +37,7 @@ export default function FlagUploader({ passcode, currentFlag, onFlagUpdate }: { 
   return (
     <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 backdrop-blur-md shadow-[0_0_20px_rgba(0,0,0,0.5)]">
       <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-2">
-        <span>🏳️‍🌈</span> Custom Flag Upload
+        <span>🇺🇸</span> Custom Flag Upload
       </h3>
       <p className="text-xs text-slate-400 mb-4 leading-snug">
         Establish national pride by designing and uploading your official flag. Keep it appropriate! (Max size: 2MB).
