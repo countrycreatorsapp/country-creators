@@ -1,7 +1,4 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "outputDirectory": "out",
   "headers": [
     {
       "source": "/(.*)",
@@ -13,6 +10,10 @@
         {
           "key": "Access-Control-Allow-Origin",
           "value": "*"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": ""
         }
       ]
     }
